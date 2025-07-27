@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.junit.Assert;
 import org.openqa.selenium.WebDriver;
 
-import com.aventstack.extentreports.ExtentTest;
 import com.pages.CommonMethods;
 import com.pages.HomePage;
 import com.pages.LoginPage;
@@ -13,7 +12,12 @@ import com.qa.factory.DriverFactory;
 
 import appHooks.ApplicationHooks;
 import io.cucumber.java.After;
+import io.cucumber.java.AfterStep;
+
 import com.aventstack.extentreports.*;
+import com.aventstack.extentreports.markuputils.ExtentColor;
+import com.aventstack.extentreports.markuputils.MarkupHelper;
+
 import io.cucumber.java.en.*;
 
 public class LoginSteps {
@@ -76,10 +80,16 @@ public class LoginSteps {
     public void page_title_should_be(String expectedTitle) throws IOException {
         test = ApplicationHooks.extent.createTest("Verify Page Title");
         try {
-            commonMethods.softAssertPageTitle(expectedTitle);
-            test.log(Status.PASS, "Page title matches expected: " + expectedTitle);
-        } catch (AssertionError e) {
-            test.log(Status.FAIL, "Page title verification failed: " + e.getMessage());
+            boolean isTitleMatch = commonMethods.softAssertPageTitle(expectedTitle);
+
+            if (isTitleMatch) {
+                test.log(Status.PASS, "Page title matches expected: " + expectedTitle);
+            } else {
+                test.log(Status.FAIL, "Page title verification failed. Expected: " +
+                        expectedTitle + " but found: " + driver.getTitle());
+            }
+        } catch (Exception e) {
+            test.log(Status.FAIL, "Error occurred during title verification: " + e.getMessage());
             throw e;
         } finally {
             String screenShot = CommonMethods.getScreenshot(driver, "TitleVerification");
@@ -87,18 +97,48 @@ public class LoginSteps {
         }
     }
 
+    // @Then("forgot your password link should be displayed")
+    // public void forgot_your_password_link_should_be_displayed() throws IOException {
+    //     test = ApplicationHooks.extent.createTest("Verify Forgot Password Link");
+    //     try {
+    //         Assert.assertTrue(commonMethods.isDisplayed(loginPage.forgotPasswordLink));
+    //         test.log(Status.PASS, "Forgot password link is displayed");
+    //     } catch (AssertionError e) {
+    //         test.log(Status.FAIL, "Forgot password link verification failed: " + e.getMessage());
+    //         throw e;
+    //     } finally {
+    //         String screenShot = CommonMethods.getScreenshot(driver, "ForgotPasswordLink");
+    //         test.addScreenCaptureFromPath(screenShot);
+    //     }
+    // }
+
     @Then("forgot your password link should be displayed")
     public void forgot_your_password_link_should_be_displayed() throws IOException {
         test = ApplicationHooks.extent.createTest("Verify Forgot Password Link");
+        String verificationName = "ForgotPasswordLinkVisibility";
+        boolean isDisplayed = false;
+
         try {
-            Assert.assertTrue(commonMethods.isDisplayed(loginPage.forgotPasswordLink));
-            test.log(Status.PASS, "Forgot password link is displayed");
-        } catch (AssertionError e) {
-            test.log(Status.FAIL, "Forgot password link verification failed: " + e.getMessage());
+            isDisplayed = commonMethods.isDisplayed(loginPage.forgotPasswordLink);
+
+            if (isDisplayed) {
+                test.log(Status.PASS, "Forgot password link is visible as expected");
+            } else {
+                throw new AssertionError("Forgot password link is not visible on the page");
+            }
+        } catch (Exception e) {
+            test.log(Status.FAIL,
+                    MarkupHelper.createLabel("Forgot password link verification failed", ExtentColor.RED));
+            test.log(Status.FAIL, "Expected: Forgot password link should be visible");
+            test.log(Status.FAIL, "Actual: " + (e.getMessage() != null ? e.getMessage() : "Link not found"));
             throw e;
         } finally {
-            String screenShot = CommonMethods.getScreenshot(driver, "ForgotPasswordLink");
-            test.addScreenCaptureFromPath(screenShot);
+            try {
+                String screenShot = CommonMethods.getScreenshot(driver, verificationName);
+                test.addScreenCaptureFromPath(screenShot, verificationName + " Screenshot");
+            } catch (IOException e) {
+                test.warning("Failed to capture screenshot: " + e.getMessage());
+            }
         }
     }
 

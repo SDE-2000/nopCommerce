@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Date;
+import java.util.NoSuchElementException;
 
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.By;
@@ -51,34 +52,69 @@ public class CommonMethods {
 		return screenshotPath;
 	}
 
-	public void highlight_Element(WebElement element, WebDriver driver) {
-		JavascriptExecutor js = (JavascriptExecutor) driver;
-		js.executeScript("arguments[0].style.border='2px solid red'", element);
+	// Common method for finding elements with highlighting
+	private WebElement findElement(By locator) {
+		try {
+			WebElement element = driver.findElement(locator);
+			highlightElement(element);
+			return element;
+		} catch (NoSuchElementException e) {
+			throw new RuntimeException("Element not found: " + locator, e);
+		}
 	}
 
-	// Basic Interactions
+	// Highlight element (extracted as separate reusable method)
+	private void highlightElement(WebElement element) {
+		//Your existing highlight implementation
+		Example: ((JavascriptExecutor)
+		driver).executeScript("arguments[0].style.border='3px solid red'", element);
+	}
+
 	public void click(By locator) {
-		highlight_Element(driver.findElement(locator), driver);
-		driver.findElement(locator).click();
-
+		try {
+			WebElement element = findElement(locator);
+			element.click();
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to click element: " + locator, e);
+		}
 	}
 
+	// SendKeys with consistent pattern
 	public void sendKeys(By locator, String text) {
-		WebElement element = driver.findElement(locator);
-		highlight_Element(element, driver);
-		element.sendKeys(text);
+		try {
+			WebElement element = findElement(locator);
+			element.clear();
+			element.sendKeys(text);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to enter text in element: " + locator, e);
+		}
 	}
 
+	// isDisplayed with consistent pattern
 	public boolean isDisplayed(By locator) {
-		return driver.findElement(locator).isDisplayed();
+		try {
+			return findElement(locator).isDisplayed();
+		} catch (NoSuchElementException e) {
+			return false;
+		}
 	}
 
+	// getText with consistent pattern
 	public String getText(By locator) {
-		return driver.findElement(locator).getText();
+		try {
+			return findElement(locator).getText();
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to get text from element: " + locator, e);
+		}
 	}
 
+	// getCurrentUrl with consistent pattern
 	public String getCurrentUrl() {
-		return driver.getCurrentUrl();
+		try {
+			return driver.getCurrentUrl();
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to get current URL", e);
+		}
 	}
 
 	/*
@@ -88,19 +124,28 @@ public class CommonMethods {
 		return driver.getTitle();
 	}
 
-	public void softAssertPageTitle(String expectedTitle) {
+	// Soft Assert for Page Title
+	public boolean softAssertPageTitle(String expectedTitle) {
 		String actualTitle = getPageTitle();
-		softAssert.assertEquals(actualTitle, expectedTitle,
-				String.format("\nPage Title Mismatch!\nExpected: '%s'\nActual: '%s'", expectedTitle, actualTitle));
+		boolean isMatch = actualTitle.equals(expectedTitle);
+
+		if (!isMatch) {
+			String errorMessage = String.format(
+					"\nPage Title Mismatch!\nExpected: '%s'\nActual: '%s'",
+					expectedTitle, actualTitle);
+			softAssert.fail(errorMessage);
+		}
+
+		return isMatch;
 	}
 
 	// Waits
 	public void waitForElementToBeClickable(By locator, Duration timeout) {
 		new WebDriverWait(driver, timeout).until(ExpectedConditions.elementToBeClickable(locator));
 	}
-	
+
 	public void assertAll() {
-        softAssert.assertAll();
-    }
+		softAssert.assertAll();
+	}
 
 }

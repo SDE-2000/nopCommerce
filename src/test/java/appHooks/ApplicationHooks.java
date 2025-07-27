@@ -9,7 +9,6 @@ import org.openqa.selenium.WebDriver;
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.reporter.ExtentSparkReporter;
 import com.aventstack.extentreports.reporter.configuration.Theme;
-import com.pages.CommonMethods;
 import com.qa.factory.DriverFactory;
 import com.util.ConfigReader;
 
@@ -21,7 +20,6 @@ public class ApplicationHooks {
 	private DriverFactory driverFactory;
 	private WebDriver driver;
 	private ConfigReader configReader;
-	private CommonMethods commonMethods;
 	Properties prop;
 
 	public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
@@ -49,7 +47,6 @@ public class ApplicationHooks {
 		driverFactory = new DriverFactory();
 		String url = prop.getProperty("url");
 		driver = driverFactory.init_driver(browserName);
-		commonMethods = new CommonMethods(driver);
 		driver.get(url);
 
 	}
@@ -59,8 +56,6 @@ public class ApplicationHooks {
 		driver.quit();
 	}
 	
-	
-
 	@After
 	public void reportGenerator() {
 		extent.flush();

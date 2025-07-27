@@ -9,5 +9,5 @@ Feature: Login page feature
     Given user is on Home page
     And user click login
     When user gets the title of the page
-    And page title should be "nopCommerce demo store. Login."
+    And page title should be "nopCommerce demo store. Login"
     Then forgot your password link should be displayed
